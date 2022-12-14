@@ -7,85 +7,121 @@ import { SearchBar } from '../../components/SearchBar';
 import { LoginDataItem } from '../../components/LoginDataItem';
 
 import {
-  Container,
-  Metadata,
-  Title,
-  TotalPassCount,
-  LoginList,
+    Container,
+    Metadata,
+    Title,
+    TotalPassCount,
+    LoginList
 } from './styles';
 
 interface LoginDataProps {
-  id: string;
-  service_name: string;
-  email: string;
-  password: string;
-};
+    id: string;
+    service_name: string;
+    email: string;
+    password: string;
+}
 
 type LoginListDataProps = LoginDataProps[];
 
 export function Home() {
-  const [searchText, setSearchText] = useState('');
-  const [searchListData, setSearchListData] = useState<LoginListDataProps>([]);
-  const [data, setData] = useState<LoginListDataProps>([]);
+    const [searchText, setSearchText] = useState('');
+    const [searchListData, setSearchListData] = useState<LoginListDataProps>(
+        []
+    );
+    const [data, setData] = useState<LoginListDataProps>([]);
 
-  async function loadData() {
-    const dataKey = '@savepass:logins';
-    // Get asyncStorage data, use setSearchListData and setData
-  }
+    async function loadData() {
+        const dataKey = '@savepass:logins';
+        const response = await AsyncStorage.getItem(dataKey);
+        const passwords = response ? JSON.parse(response) : [];
 
-  function handleFilterLoginData() {
-    // Filter results inside data, save with setSearchListData
-  }
+        const passwordsList = passwords.map((item: LoginDataProps) => {
+            return {
+                id: item.id,
+                service_name: item.service_name,
+                email: item.email,
+                password: item.password
+            };
+        });
 
-  function handleChangeInputText(text: string) {
-    // Update searchText value
-  }
+        setData(passwordsList);
 
-  useFocusEffect(useCallback(() => {
-    loadData();
-  }, []));
+        setSearchListData(passwordsList);
+    }
 
-  return (
-    <>
-      <Header
-        user={{
-          name: 'Rocketseat',
-          avatar_url: 'https://i.ibb.co/ZmFHZDM/rocketseat.jpg'
-        }}
-      />
-      <Container>
-        <SearchBar
-          placeholder="Qual senha você procura?"
-          onChangeText={handleChangeInputText}
-          value={searchText}
-          returnKeyType="search"
-          onSubmitEditing={handleFilterLoginData}
+    function handleFilterLoginData() {
+        const filteredData = searchListData.filter((data) => {
+            const isValid = data.service_name
+                .toLowerCase()
+                .includes(searchText.toLowerCase());
 
-          onSearchButtonPress={handleFilterLoginData}
-        />
-
-        <Metadata>
-          <Title>Suas senhas</Title>
-          <TotalPassCount>
-            {searchListData.length
-              ? `${`${searchListData.length}`.padStart(2, '0')} ao total`
-              : 'Nada a ser exibido'
+            if (isValid) {
+                return data;
             }
-          </TotalPassCount>
-        </Metadata>
+        });
 
-        <LoginList
-          keyExtractor={(item) => item.id}
-          data={searchListData}
-          renderItem={({ item: loginData }) => {
-            return <LoginDataItem
-              service_name={loginData.service_name}
-              email={loginData.email}
-              password={loginData.password}
+        setSearchListData(filteredData);
+    }
+
+    function handleChangeInputText(text: string) {
+        if (!text) {
+            setSearchListData(data);
+        }
+
+        setSearchText(text);
+    }
+
+    useFocusEffect(
+        useCallback(() => {
+            loadData();
+        }, [])
+    );
+
+    return (
+        <>
+            <Header
+                user={{
+                    name: 'Andrelino',
+                    avatar_url: 'https://github.com/andrelinos.png'
+                }}
             />
-          }}
-        />
-      </Container>
-    </>
-  )
+            <Container>
+                <SearchBar
+                    placeholder="Qual senha você procura?"
+                    onChangeText={handleChangeInputText}
+                    value={searchText}
+                    returnKeyType="search"
+                    onSubmitEditing={handleFilterLoginData}
+                    onSearchButtonPress={handleFilterLoginData}
+                    autoCapitalize="none"
+                />
+
+                <Metadata>
+                    <Title>Suas senhas</Title>
+                    <TotalPassCount>
+                        {searchListData.length
+                            ? `${`${searchListData.length}`.padStart(
+                                  2,
+                                  '0'
+                              )} ao total`
+                            : 'Nada a ser exibido'}
+                    </TotalPassCount>
+                </Metadata>
+
+                <LoginList
+                    keyExtractor={(item) => item.id}
+                    data={searchListData}
+                    renderItem={({ item: loginData }) => {
+                        return (
+                            <LoginDataItem
+                                service_name={loginData.service_name}
+                                email={loginData.email}
+                                password={loginData.password}
+                            />
+                        );
+                    }}
+                />
+            </Container>
+        </>
+    );
 }
